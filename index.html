@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="知识捕手">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1c1a"  media="(prefers-color-scheme: dark)">
+<title>知识捕手</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f7f6f3;--bg3:#eeede8;
+  --text:#1a1a18;--text2:#6b6b64;--text3:#a8a8a0;
+  --border:rgba(0,0,0,0.11);--border2:rgba(0,0,0,0.20);
+  --r:12px;--rs:8px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;
+  --text:#e8e8e0;--text2:#9a9a92;--text3:#5a5a54;
+  --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.20);
+}}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,'PingFang SC','Hiragino Sans GB',sans-serif;
+  -webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;}
+
+.app{max-width:480px;margin:0 auto;padding:0 16px calc(40px + var(--safe-bottom));}
+
+/* header */
+.hd{display:flex;align-items:center;justify-content:space-between;
+  padding:calc(var(--safe-top) + 14px) 0 18px;}
+.hd-left{display:flex;align-items:center;gap:9px;}
+.logo{width:30px;height:30px;background:var(--text);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;font-size:15px;}
+.app-name{font-size:16px;font-weight:500;}
+.hd-btn{width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border2);
+  background:var(--bg2);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:14px;-webkit-appearance:none;}
+
+/* cfg drawer */
+.cfg{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);
+  padding:14px;margin-bottom:16px;display:none;}
+.cfg.open{display:block;}
+.cfg label{display:block;font-size:11px;color:var(--text3);margin-bottom:5px;margin-top:11px;}
+.cfg label:first-of-type{margin-top:0;}
+.cfg input{width:100%;height:38px;padding:0 10px;font-size:13px;font-family:inherit;
+  border:0.5px solid var(--border2);border-radius:var(--rs);
+  background:var(--bg);color:var(--text);}
+.cfg input:focus{outline:none;border-color:var(--text);}
+.cfg-note{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6;}
+.cfg-note a{color:var(--text2);}
+.cfg-save{width:100%;margin-top:12px;height:38px;font-size:13px;font-family:inherit;
+  font-weight:500;border:none;border-radius:var(--rs);
+  background:var(--text);color:var(--bg);cursor:pointer;-webkit-appearance:none;}
+
+/* smart input */
+.inp-wrap{position:relative;margin-bottom:11px;}
+.main-inp{width:100%;min-height:86px;padding:13px 48px 13px 14px;
+  font-size:15px;font-family:inherit;line-height:1.65;
+  border:0.5px solid var(--border2);border-radius:var(--r);
+  background:var(--bg);color:var(--text);resize:none;-webkit-appearance:none;}
+.main-inp::placeholder{color:var(--text3);}
+.main-inp:focus{outline:none;border-color:var(--text);}
+.mic{position:absolute;top:10px;right:10px;width:34px;height:34px;
+  border-radius:50%;border:0.5px solid var(--border);background:var(--bg2);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:all .15s;}
+.mic.rec{background:#FCEBEB;border-color:#F09595;animation:pulse .9s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+
+/* attach row */
+.attach{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:13px;}
+.ab{padding:9px 3px 7px;border:0.5px solid var(--border);border-radius:var(--rs);
+  background:var(--bg);color:var(--text2);font-size:11px;font-family:inherit;
+  cursor:pointer;text-align:center;-webkit-appearance:none;}
+.ab:active{background:var(--bg3);}
+.ab i{display:block;font-size:19px;font-style:normal;margin-bottom:3px;}
+
+/* type pill */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;
+  border-radius:20px;font-size:12px;margin-bottom:11px;transition:all .2s;}
+.pill.hide{display:none;}
+.p-note   {background:#EAF3DE;color:#27500A;}
+.p-article{background:#E6F1FB;color:#0C447C;}
+.p-media  {background:#FAEEDA;color:#633806;}
+.p-image  {background:#EEEDFE;color:#3C3489;}
+.p-pdf    {background:#FAECE7;color:#712B13;}
+.p-tweet  {background:#E1F5EE;color:#085041;}
+.p-book   {background:#FBEAF0;color:#72243E;}
+
+/* depth */
+.depth-wrap{margin-bottom:13px;display:none;}
+.depth-lbl{font-size:11px;color:var(--text3);margin-bottom:6px;}
+.depth-row{display:flex;gap:6px;}
+.db{flex:1;padding:8px 4px;font-size:11px;font-family:inherit;
+  border:0.5px solid var(--border);border-radius:var(--rs);
+  background:var(--bg);color:var(--text2);cursor:pointer;text-align:center;
+  line-height:1.5;-webkit-appearance:none;}
+.db.on{border-color:var(--text2);color:var(--text);background:var(--bg2);}
+.db small{display:block;font-size:10px;color:var(--text3);}
+.db.on small{color:var(--text2);}
+
+/* media tools */
+.media-sec{display:none;margin-bottom:13px;}
+.media-sec.show{display:block;}
+.media-hint{font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.6;}
+.ext-row{display:flex;gap:8px;}
+.ext{flex:1;padding:10px 11px;border:0.5px solid var(--border);
+  border-radius:var(--rs);background:var(--bg);text-decoration:none;display:block;}
+.ext:active{background:var(--bg2);}
+.ext-n{font-size:13px;font-weight:500;color:var(--text);}
+.ext-d{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* result card */
+.rc{border:0.5px solid var(--border);border-radius:var(--r);
+  overflow:hidden;margin-bottom:13px;display:none;}
+.rc.show{display:block;}
+.rc-hd{padding:9px 14px;border-bottom:0.5px solid var(--border);
+  background:var(--bg2);display:flex;align-items:center;
+  justify-content:space-between;font-size:12px;color:var(--text2);}
+.ai-badge{font-size:10px;padding:2px 8px;border-radius:20px;
+  background:#EAF3DE;color:#27500A;}
+.rc-sec{padding:10px 14px;border-bottom:0.5px solid var(--border);}
+.rc-sec:last-child{border-bottom:none;}
+.rc-sec-t{font-size:10px;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:5px;}
+.rc-sec textarea{width:100%;font-size:13px;font-family:inherit;border:none;
+  background:transparent;color:var(--text);resize:none;outline:none;line-height:1.65;}
+.rc-sec textarea:focus{background:var(--bg2);padding:6px 8px;border-radius:6px;
+  margin:-6px -8px;width:calc(100% + 16px);}
+
+/* buttons */
+.analyze-btn{width:100%;padding:12px;margin-bottom:9px;font-size:14px;
+  font-family:inherit;font-weight:500;border:0.5px solid var(--border2);
+  border-radius:var(--rs);background:var(--bg2);color:var(--text);
+  cursor:pointer;display:none;-webkit-appearance:none;}
+.analyze-btn:active{opacity:.7;}
+.submit-btn{width:100%;padding:14px;font-size:15px;font-family:inherit;
+  font-weight:500;border:none;border-radius:var(--rs);
+  background:var(--text);color:var(--bg);cursor:pointer;-webkit-appearance:none;}
+.submit-btn:active{opacity:.8;}
+.submit-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+/* status */
+.st{font-size:13px;padding:10px 14px;border-radius:var(--rs);
+  margin-top:9px;display:none;line-height:1.5;}
+.st.ok {display:block;background:#EAF3DE;color:#27500A;}
+.st.err{display:block;background:#FCEBEB;color:#A32D2D;}
+.st.ld {display:block;background:var(--bg2);color:var(--text2);}
+
+/* sep & recent */
+.sep{height:0.5px;background:var(--border);margin:20px 0 15px;}
+.rec-hd{font-size:11px;color:var(--text3);letter-spacing:.04em;margin-bottom:9px;}
+.ri{display:flex;align-items:center;gap:8px;padding:9px 0;
+  border-bottom:0.5px solid var(--border);font-size:13px;}
+.ri:last-child{border-bottom:none;}
+.ri-ic{font-size:13px;width:18px;text-align:center;flex-shrink:0;}
+.ri-tx{flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ri-tm{font-size:11px;color:var(--text3);flex-shrink:0;}
+
+/* iOS install hint */
+.ios-hint{font-size:12px;color:var(--text3);text-align:center;
+  padding:10px 0 0;line-height:1.7;display:none;}
+.ios-hint.show{display:block;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="hd">
+    <div class="hd-left">
+      <div class="logo">💡</div>
+      <span class="app-name">知识捕手</span>
+    </div>
+    <button class="hd-btn" onclick="toggleCfg()" title="设置">⚙️</button>
+  </div>
+
+  <!-- Config drawer -->
+  <div class="cfg" id="cfg">
+    <label>Notion 数据库 ID</label>
+    <input type="text" id="cfgDb" placeholder="32位字符串（从数据库 URL 复制）" autocomplete="off">
+    <p class="cfg-note">
+      数据库 ID：打开 Notion 数据库页面，复制 URL 中 notion.so/ 后的32位字符串<br>
+      Notion Token 已安全保存在服务器端，无需在此填写
+    </p>
+    <button class="cfg-save" onclick="saveCfg()">保存</button>
+  </div>
+
+  <!-- Smart input -->
+  <div class="inp-wrap">
+    <textarea class="main-inp" id="mainInp"
+      placeholder="输入想法、粘贴链接……&#10;或点击 🎙️ 语音输入"
+      oninput="detect()" rows="3"></textarea>
+    <button class="mic" id="mic" onclick="toggleVoice()">🎙️</button>
+  </div>
+
+  <!-- Attach row -->
+  <div class="attach">
+    <button class="ab" onclick="document.getElementById('imgF').click()">
+      <i>🖼️</i>图片截图
+      <input type="file" id="imgF" accept="image/*" style="display:none" onchange="handleImg(this)">
+    </button>
+    <button class="ab" onclick="document.getElementById('pdfF').click()">
+      <i>📄</i>PDF文档
+      <input type="file" id="pdfF" accept="application/pdf" style="display:none" onchange="handlePdf(this)">
+    </button>
+    <button class="ab" onclick="setManual('book')"><i>📚</i>读书笔记</button>
+    <button class="ab" onclick="setManual('tweet')"><i>🐦</i>推文</button>
+  </div>
+
+  <!-- Type pill -->
+  <div class="pill hide" id="pill"></div>
+
+  <!-- Depth selector -->
+  <div class="depth-wrap" id="depthWrap">
+    <div class="depth-lbl">解析深度</div>
+    <div class="depth-row">
+      <button class="db on" id="d1" onclick="setDepth(1)">速览<small>1句摘要</small></button>
+      <button class="db"    id="d2" onclick="setDepth(2)">标准<small>摘要+要点</small></button>
+      <button class="db"    id="d3" onclick="setDepth(3)">深度<small>+金句+启发</small></button>
+    </div>
+  </div>
+
+  <!-- Media tools -->
+  <div class="media-sec" id="mediaSec">
+    <p class="media-hint">建议先在以下工具解析，完成后将笔记粘贴至上方：</p>
+    <div class="ext-row">
+      <a class="ext" href="https://notebooklm.google.com" target="_blank" rel="noopener">
+        <div class="ext-n">📓 NotebookLM</div>
+        <div class="ext-d">上传音视频生成摘要</div>
+      </a>
+      <a class="ext" href="https://www.kimi.ai" target="_blank" rel="noopener">
+        <div class="ext-n">🌙 Kimi</div>
+        <div class="ext-d">链接/字幕 AI 总结</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- AI Result -->
+  <div class="rc" id="rc">
+    <div class="rc-hd">
+      <span id="rcTitle">解析结果</span>
+      <span class="ai-badge">Claude AI</span>
+    </div>
+    <div id="rcBody"></div>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">✦ AI 解析</button>
+  <button class="submit-btn"  id="submitBtn"  onclick="submitNotion()">存入 Notion →</button>
+  <div class="st" id="st"></div>
+
+  <div class="sep"></div>
+  <div class="rec-hd">最近收录</div>
+  <div id="recList">
+    <div class="ri">
+      <span class="ri-ic">💡</span>
+      <span class="ri-tx">你的第一条笔记会出现在这里</span>
+      <span class="ri-tm">—</span>
+    </div>
+  </div>
+
+  <p class="ios-hint" id="iosHint">
+    在 Safari 中点击 <strong>分享</strong> 按钮<br>选择「<strong>添加到主屏幕</strong>」即可像 App 一样使用
+  </p>
+</div>
+
+<script>
+// ━━ 配置 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 部署到 Cloudflare Pages 后，把下面的 URL 改为你的 Worker 地址
+// 格式：https://your-worker-name.your-subdomain.workers.dev
+// API routes handled by Vercel serverless functions
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const ICONS  = {note:'✏️',article:'🔗',media:'🎧',image:'🖼️',pdf:'📄',tweet:'🐦',book:'📚'};
+const LABELS = {note:'随手记',article:'网页文章',media:'视频/播客',image:'图片截图',pdf:'PDF文档',tweet:'推文',book:'读书笔记'};
+const PILL   = {note:'p-note',article:'p-article',media:'p-media',image:'p-image',pdf:'p-pdf',tweet:'p-tweet',book:'p-book'};
+const NEEDS_AI    = new Set(['article','tweet','pdf','book','image']);
+const NEEDS_DEPTH = new Set(['article','tweet','pdf','book','image']);
+
+let S = {type:null,depth:1,imgB64:null,imgMime:null,pdfB64:null,analyzed:false};
+let cfg = {token:'',dbId:''};
+let recog = null, isRec = false;
+const recents = [];
+
+// load config
+try{const s=localStorage.getItem('kc_v3');if(s)cfg=JSON.parse(s);}catch(e){}
+try{
+  if(cfg.dbId) document.getElementById('cfgDb').value=cfg.dbId;
+}catch(e){}
+
+// show iOS install hint if on iOS Safari (not standalone)
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone){
+  document.getElementById('iosHint').classList.add('show');
+}
+
+function toggleCfg(){document.getElementById('cfg').classList.toggle('open');}
+function saveCfg(){
+  cfg.dbId =document.getElementById('cfgDb').value.trim();
+  try{localStorage.setItem('kc_v3',JSON.stringify(cfg));}catch(e){}
+  document.getElementById('cfg').classList.remove('open');
+  showSt('设置已保存 ✓','ok');
+}
+
+// ── type detection ──
+function detect(){
+  const v=document.getElementById('mainInp').value.trim();
+  if(!v){setType(null);return;}
+  if(/https?:\/\/[^\s]+/.test(v)){
+    if(/twitter\.com|x\.com/i.test(v))           setType('tweet');
+    else if(/youtu|bilibili|b23\.tv|spotify|小宇宙|podcast/i.test(v)) setType('media');
+    else setType('article');
+  } else setType('note');
+}
+function setManual(t){document.getElementById('mainInp').value='';setType(t);}
+function setType(t){
+  S.type=t;S.analyzed=false;
+  document.getElementById('rc').classList.remove('show');
+  const pill=document.getElementById('pill');
+  if(!t){pill.className='pill hide';
+    document.getElementById('depthWrap').style.display='none';
+    document.getElementById('mediaSec').classList.remove('show');
+    document.getElementById('analyzeBtn').style.display='none';return;}
+  pill.className='pill '+PILL[t];
+  pill.innerHTML=ICONS[t]+' 识别为：'+LABELS[t];
+  document.getElementById('depthWrap').style.display=NEEDS_DEPTH.has(t)?'block':'none';
+  document.getElementById('mediaSec').classList.toggle('show',t==='media');
+  document.getElementById('analyzeBtn').style.display=NEEDS_AI.has(t)?'block':'none';
+}
+function setDepth(d){
+  S.depth=d;[1,2,3].forEach(i=>document.getElementById('d'+i).classList.toggle('on',i===d));
+}
+
+// ── voice ──
+function toggleVoice(){
+  if(isRec){stopVoice();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showSt('当前浏览器不支持语音，请手动输入','err');return;}
+  recog=new SR();recog.lang='zh-CN';recog.continuous=true;recog.interimResults=true;
+  recog.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;
+    document.getElementById('mainInp').value=t;detect();};
+  recog.onerror=()=>{stopVoice();showSt('录音出错，请重试','err');};
+  recog.start();isRec=true;
+  document.getElementById('mic').classList.add('rec');
+  document.getElementById('mic').textContent='⏹️';
+}
+function stopVoice(){
+  if(recog){recog.stop();recog=null;}isRec=false;
+  document.getElementById('mic').classList.remove('rec');
+  document.getElementById('mic').textContent='🎙️';
+}
+
+// ── file handling ──
+function handleImg(inp){
+  const f=inp.files[0];if(!f)return;
+  new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(f);})
+    .then(d=>{S.imgB64=d.split(',')[1];S.imgMime=f.type;setType('image');showSt('图片已加载，点击 AI 解析','ok');});
+}
+function handlePdf(inp){
+  const f=inp.files[0];if(!f)return;
+  new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(f);})
+    .then(d=>{S.pdfB64=d.split(',')[1];setType('pdf');showSt('PDF 已加载，点击 AI 解析','ok');});
+}
+
+// ── AI analysis ──
+const DEPTH_INSTR={
+  1:'只输出一句话核心摘要（summary字段，不超过80字）',
+  2:'输出摘要summary（2-3句）和3-5个要点points（字符串数组）',
+  3:'输出摘要summary、要点points（数组）、金句quotes（最多3条数组）、启发与行动actions（字符串）'
+};
+const JSON_FORMAT='严格只返回JSON，格式：{"title":"","summary":"","points":[],"quotes":[],"actions":""}，不存在字段可省略，不要任何其他内容。';
+
+async function runAnalysis(){
+  const t=S.type;
+  if(!t||t==='note'||t==='media')return;
+
+  showSt('AI 解析中，请稍候…','ld');
+  document.getElementById('analyzeBtn').disabled=true;
+
+  try{
+    let body;
+    if(t==='image'){
+      if(!S.imgB64){showSt('请先上传图片','err');return;}
+      body={model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:S.imgMime,data:S.imgB64}},
+        {type:'text',text:'提取图片中的全部文字（OCR），保留格式。若无文字，用一句话描述图片内容。直接输出，不加任何说明。'}
+      ]}]};
+    } else if(t==='pdf'){
+      if(!S.pdfB64){showSt('请先上传 PDF','err');return;}
+      body={model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
+        {type:'document',source:{type:'base64',media_type:'application/pdf',data:S.pdfB64}},
+        {type:'text',text:`分析此PDF。${DEPTH_INSTR[S.depth]}。${JSON_FORMAT}`}
+      ]}]};
+    } else {
+      const val=document.getElementById('mainInp').value.trim();
+      if(!val){showSt('请先输入内容','err');return;}
+      const names={article:'网页文章',tweet:'推文',book:'书籍/读书笔记'};
+      body={model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:`分析以下${names[t]}：\n${val}\n\n${DEPTH_INSTR[S.depth]}。${JSON_FORMAT}`}]};
+      if(t==='article'||t==='tweet') body.tools=[{type:'web_search_20250305',name:'web_search'}];
+    }
+
+    const res=await fetch('/api/anthropic',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error?.message||'API 错误 '+res.status);
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    renderResult(t,text);
+  }catch(e){showSt('解析失败：'+e.message,'err');}
+  document.getElementById('analyzeBtn').disabled=false;
+}
+
+function renderResult(t,raw){
+  let p={};
+  if(t==='image'){p={ocr:raw};}
+  else{try{const m=raw.match(/\{[\s\S]*\}/);p=JSON.parse(m?m[0]:raw);}catch(e){p={summary:raw};}}
+  const secs=[];
+  if(p.title)  secs.push({k:'title',  lb:'标题',    v:p.title,  r:1});
+  if(p.ocr)    secs.push({k:'ocr',    lb:'识别文字', v:p.ocr,    r:6});
+  if(p.summary)secs.push({k:'summary',lb:'核心摘要', v:p.summary,r:3});
+  if(p.points?.length)secs.push({k:'points',lb:'关键要点',v:p.points.join('\n'),r:Math.min(p.points.length+1,6)});
+  if(p.quotes?.length)secs.push({k:'quotes',lb:'金句',     v:p.quotes.join('\n'), r:Math.min(p.quotes.length+1,4)});
+  if(p.actions)secs.push({k:'actions',lb:'启发/行动',v:p.actions,r:2});
+  const titles={article:'文章解析',tweet:'推文解析',pdf:'PDF提炼',image:'OCR识别',book:'书籍笔记'};
+  document.getElementById('rcTitle').textContent=titles[t]||'解析结果';
+  document.getElementById('rcBody').innerHTML=secs.map(s=>`
+    <div class="rc-sec">
+      <div class="rc-sec-t">${s.lb}</div>
+      <textarea id="rc_${s.k}" rows="${s.r}">${esc(s.v)}</textarea>
+    </div>`).join('');
+  document.getElementById('rc').classList.add('show');
+  S.analyzed=true;
+  showSt('解析完成，可编辑后存入 Notion ✓','ok');
+}
+
+// ── Notion submit ──
+async function submitNotion(){
+  if(!cfg.dbId){showSt('请先在 ⚙️ 设置中填写 Notion 数据库 ID','err');return;}
+  const t=S.type||'note';
+  const mainVal=document.getElementById('mainInp').value.trim();
+  let title='',content='',url='';
+  if(S.analyzed){
+    title=(document.getElementById('rc_title')?.value||'').trim()||mainVal.slice(0,40)||LABELS[t];
+    const parts=[];
+    [{k:'summary',l:'摘要'},{k:'ocr',l:'识别文字'},{k:'points',l:'要点'},{k:'quotes',l:'金句'},{k:'actions',l:'启发'}]
+      .forEach(({k,l})=>{const el=document.getElementById('rc_'+k);if(el?.value.trim())parts.push(`【${l}】\n${el.value.trim()}`);});
+    content=parts.join('\n\n');
+  } else {
+    if(!mainVal){showSt('请先输入内容','err');return;}
+    const m=mainVal.match(/https?:\/\/[^\s]+/);
+    if(m)url=m[0];
+    title=mainVal.replace(/https?:\/\/[^\s]+/g,'').trim().slice(0,50)||url||LABELS[t];
+    content=mainVal;
+  }
+  if(!title)title=LABELS[t]+' · '+new Date().toLocaleDateString('zh-CN');
+  showSt('写入 Notion 中…','ld');
+  document.getElementById('submitBtn').disabled=true;
+  const props={
+    "标题 Title":{title:[{text:{content:title}}]},
+    "类型 Type":{select:{name:LABELS[t]}}
+  };
+  if(url)props["URL"]={url};
+  if(content)props["内容 Content"]={rich_text:[{text:{content:content.slice(0,2000)}}]};
+  try{
+    const res=await fetch('/api/notion',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({parent:{database_id:cfg.dbId},properties:props})
+    });
+    if(res.ok){
+      showSt('已存入 Notion ✓','ok');
+      addRec(title,t);
+      document.getElementById('mainInp').value='';
+      setType(null);
+      document.getElementById('rc').classList.remove('show');
+      S={type:null,depth:1,imgB64:null,imgMime:null,pdfB64:null,analyzed:false};
+    } else {
+      const e=await res.json().catch(()=>({}));
+      showSt('写入失败：'+(e.message||res.status),'err');
+    }
+  }catch(e){showSt('网络错误：'+e.message,'err');}
+  document.getElementById('submitBtn').disabled=false;
+}
+
+function addRec(title,type){
+  recents.unshift({title,icon:ICONS[type]||'•',time:'刚刚'});
+  if(recents.length>10)recents.pop();
+  document.getElementById('recList').innerHTML=recents.map(i=>`
+    <div class="ri">
+      <span class="ri-ic">${i.icon}</span>
+      <span class="ri-tx">${esc(i.title)}</span>
+      <span class="ri-tm">${i.time}</span>
+    </div>`).join('');
+}
+
+function showSt(msg,type){
+  const el=document.getElementById('st');
+  el.textContent=msg;el.className='st '+type;
+  if(type==='ok')setTimeout(()=>el.className='st',4000);
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// PWA install (Android/Chrome)
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  // could show a custom button here
+});
+</script>
+</body>
+</html>
