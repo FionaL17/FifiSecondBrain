@@ -148,6 +148,10 @@ input[type=file]{display:none}
   border:none;border-radius:var(--rs);background:var(--accent);color:var(--bg);cursor:pointer;-webkit-appearance:none}
 .submit-btn:active{opacity:.8}
 .submit-btn:disabled{opacity:.35;cursor:not-allowed}
+.quick-btn{padding:13px 16px;font-size:14px;font-family:inherit;font-weight:500;
+  border:1px solid var(--border2);border-radius:var(--rs);
+  background:var(--bg2);color:var(--text2);cursor:pointer;white-space:nowrap;-webkit-appearance:none;flex-shrink:0}
+.quick-btn:active{opacity:.7}
 .sep{height:1px;background:var(--border);margin:20px 0 16px}
 .rec-hd{font-size:11px;color:var(--text3);letter-spacing:.04em;margin-bottom:10px}
 .ri{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid var(--border)}
@@ -253,6 +257,7 @@ input[type=file]{display:none}
   <div class="st" id="st"></div>
   <div class="actions">
     <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">✦ AI 解析</button>
+    <button class="quick-btn" id="quickBtn" onclick="quickSave()" title="直接存入，不解析">⚡ 直存</button>
     <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">存入 Notion →</button>
   </div>
   <div class="sep"></div>
@@ -519,13 +524,28 @@ async function runAnalysis(){
         if(urlMatch){
           showSt('正在抓取文章内容…','ld');
           try{
-            const ml=await fetch('https://api.microlink.io?url='+encodeURIComponent(urlMatch[0])+'&text=true');
-            const mld=await ml.json();
-            if(mld.status==='success'&&mld.data){
-              const tx=mld.data.text||mld.data.description||'';
-              if(tx&&tx.length>80)content='标题：'+(mld.data.title||'')+'\n\n正文：'+tx.slice(0,4000);
+            // Use Jina AI reader - works well with WeChat articles
+            const jinaUrl='https://r.jina.ai/'+urlMatch[0];
+            const jinaRes=await fetch(jinaUrl,{headers:{'Accept':'application/json','X-Return-Format':'markdown'}});
+            const jinaText=await jinaRes.text();
+            if(jinaText&&jinaText.length>100){
+              // Jina returns markdown with title on first line
+              const jinaLines=jinaText.split('\n').filter(l=>l.trim());
+              const jinaTitle=jinaLines[0].replace(/^#+\s*/,'').trim();
+              const jinaBody=jinaLines.slice(1).join('\n').slice(0,4000);
+              content='标题：'+jinaTitle+'\n\n正文：'+jinaBody;
             }
-          }catch(e){}
+          }catch(e){
+            // fallback to microlink
+            try{
+              const ml=await fetch('https://api.microlink.io?url='+encodeURIComponent(urlMatch[0])+'&text=true');
+              const mld=await ml.json();
+              if(mld.status==='success'&&mld.data){
+                const tx=mld.data.text||mld.data.description||'';
+                if(tx&&tx.length>80)content='标题：'+(mld.data.title||'')+'\n\n正文：'+tx.slice(0,4000);
+              }
+            }catch(e2){}
+          }
           showSt('AI 解析中，请稍候…','ld');
         }
       }
@@ -557,6 +577,56 @@ function renderResult(t,raw){
   document.getElementById('rc').classList.add('show');
   S.analyzed=true;
   showSt('解析完成，可编辑后存入 Notion ✓','ok');
+}
+
+async function quickSave(){
+  if(!cfg.dbId){showSt('请先在 ⚙ 设置中填写数据库 ID','err');return;}
+  const mainVal=document.getElementById('mainInp').value.trim();
+  if(!mainVal){showSt('请先输入内容','err');return;}
+  const t=S.type||'note';
+  let title='',url='';
+ // Parse "title\nURL" format (from shortcut) or plain URL or plain text
+  const lines=mainVal.split('\n').map(l=>l.trim()).filter(Boolean);
+  const urlLine=lines.find(l=>/https?:\/\//.test(l));
+  const titleLine=lines.find(l=>!/https?:\/\//.test(l));
+  if(urlLine)url=urlLine.match(/https?:\/\/[^\s]+/)[0];
+  if(titleLine)title=titleLine.slice(0,80);
+  if(!title&&url){
+    showSt('获取标题中…','ld');
+    try{
+      const jinaRes=await fetch('https://r.jina.ai/'+url,{headers:{'Accept':'application/json','X-Return-Format':'markdown'}});
+      const jinaText=await jinaRes.text();
+      if(jinaText&&jinaText.length>10){
+        const firstLine=jinaText.split('\n').find(l=>l.trim());
+        if(firstLine)title=firstLine.replace(/^#+\s*/,'').trim().slice(0,80);
+      }
+    }catch(e){}
+  }
+  if(!title)title=url||LABELS[t];
+  if(!title)title=LABELS[t]+' · '+new Date().toLocaleDateString('zh-CN');
+  showSt('直存中…','ld');
+  document.getElementById('quickBtn').disabled=true;
+  const props={
+    '标题 Title':{title:[{text:{content:title}}]},
+    '类型 Type':{select:{name:LABELS[t]}}
+  };
+  if(url)props['URL']={url};
+  try{
+    const res=await fetch('/api/notion',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({parent:{database_id:cfg.dbId},properties:props})});
+    if(res.ok){
+      showSt('已直存 Notion ✓','ok');
+      addRec(title,t);
+      document.getElementById('mainInp').value='';
+      document.getElementById('inpCount').textContent='';
+      setType(null);
+      S={type:null,depth:1,imgB64:null,imgMime:null,pdfB64:null,analyzed:false,todoDeadline:null};
+    }else{
+      const e=await res.json().catch(()=>({}));
+      showSt('存入失败：'+(e.message||res.status),'err');
+    }
+  }catch(e){showSt('网络错误：'+e.message,'err');}
+  document.getElementById('quickBtn').disabled=false;
 }
 
 function handleSubmit(){if(S.type==='todo')saveTodoToNotion();else submitNotion();}
