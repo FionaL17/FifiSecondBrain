@@ -350,9 +350,7 @@ function setDepth(d){S.depth=d;[1,2,3].forEach(i=>document.getElementById('d'+i)
 async function detectTodo(text){
   try{
     const res=await callAPI({model:'claude-sonnet-4-20250514',max_tokens:200,
-      messages:[{role:'user',content:TODO_PROMPT+'
-
-文字：'+text}]});
+      messages:[{role:'user',content:TODO_PROMPT+'\n\n文字：'+text}]});
     const raw=res.content.filter(b=>b.type==='text').map(b=>b.text).join('');
     const m=raw.match(/\{[\s\S]*\}/);
     if(!m)return;
@@ -458,19 +456,14 @@ async function runAnalysis(){
             const mld=await ml.json();
             if(mld.status==='success'&&mld.data){
               const tx=mld.data.text||mld.data.description||'';
-              if(tx&&tx.length>80)content='标题：'+(mld.data.title||'')+'
-
-正文：'+tx.slice(0,4000);
+              if(tx&&tx.length>80)content='标题：'+(mld.data.title||'')+'\n\n正文：'+tx.slice(0,4000);
             }
           }catch(e){}
           showSt('AI 解析中，请稍候…','ld');
         }
       }
       body={model:'claude-sonnet-4-20250514',max_tokens:1000,
-        messages:[{role:'user',content:'分析以下'+names[t]+'：
-'+content+'
-
-'+DEPTH_INSTR[S.depth]+'。'+JSON_FMT}]};
+        messages:[{role:'user',content:'分析以下'+names[t]+'：\n\n'+content+'\n\n'+DEPTH_INSTR[S.depth]+'。'+JSON_FMT}]};
     }
     const data=await callAPI(body);
     const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
