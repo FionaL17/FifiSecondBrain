@@ -347,26 +347,83 @@ function setType(t){
 }
 function setDepth(d){S.depth=d;[1,2,3].forEach(i=>document.getElementById('d'+i).classList.toggle('on',i===d));}
 
-async function detectTodo(text){
-  try{
-    const res=await callAPI({model:'claude-sonnet-4-20250514',max_tokens:200,
-      messages:[{role:'user',content:TODO_PROMPT+'\n\n文字：'+text}]});
-    const raw=res.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const m=raw.match(/\{[\s\S]*\}/);
-    if(!m)return;
-    const p=JSON.parse(m[0]);
-    if(p.is_todo&&p.task){
-      S.type='todo';S.todoDeadline=p.deadline||null;
-      document.getElementById('tpIcon').textContent='✅';
-      document.getElementById('tpText').textContent='待办事项';
-      document.getElementById('typePill').classList.add('show');
-      document.getElementById('todoTask').value=p.task;
-      document.getElementById('todoTimeText').textContent=p.deadline_friendly||'未识别到时间';
-      document.getElementById('todoCard').classList.add('show');
-      document.getElementById('depthWrap').classList.remove('show');
-      document.getElementById('analyzeBtn').classList.remove('show');
-    }
-  }catch(e){}
+function detectTodo(text){
+  // Local regex-based todo detection - no API needed
+  const todoKeywords=/提醒|待办|记得|别忘了|需要|要.*交|要.*发|要.*完成|截止|deadline|ddl|任务/i;
+  const timePatterns=[
+    // 周X 上午/下午 HH:MM or HH点
+    {re:/周([一二三四五六日天])[\s,，]*?(上午|下午|晚上)?[\s]*?(\d{1,2})[点:：](\d{0,2})?/,
+     fn:(m)=>{
+       const days={一:1,二:2,三:3,四:4,五:5,六:6,日:0,天:0};
+       const d=new Date();
+       const target=days[m[1]];
+       const diff=(target-d.getDay()+7)%7||7;
+       d.setDate(d.getDate()+diff);
+       let h=parseInt(m[3]);
+       if((m[2]==='下午'||m[2]==='晚上')&&h<12)h+=12;
+       d.setHours(h,parseInt(m[4]||0),0,0);
+       const friendly='周'+m[1]+' '+(m[2]||'')+m[3]+'点'+(m[4]?m[4]+'分':'');
+       return {deadline:d.toISOString(),friendly};
+     }},
+    // 明天/后天
+    {re:/(明天|后天)[\s,，]*?(上午|下午|晚上)?[\s]*?(\d{1,2})[点:：](\d{0,2})?/,
+     fn:(m)=>{
+       const d=new Date();
+       d.setDate(d.getDate()+(m[1]==='后天'?2:1));
+       let h=parseInt(m[3]);
+       if((m[2]==='下午'||m[2]==='晚上')&&h<12)h+=12;
+       d.setHours(h,parseInt(m[4]||0),0,0);
+       const friendly=m[1]+' '+(m[2]||'')+m[3]+'点';
+       return {deadline:d.toISOString(),friendly};
+     }},
+    // X月X日
+    {re:/(\d{1,2})月(\d{1,2})[日号][\s,，]*?(上午|下午|晚上)?[\s]*?(\d{1,2})?[点:：]?(\d{0,2})?/,
+     fn:(m)=>{
+       const d=new Date();
+       d.setMonth(parseInt(m[1])-1);d.setDate(parseInt(m[2]));
+       let h=parseInt(m[4]||17);
+       if((m[3]==='下午'||m[3]==='晚上')&&h<12)h+=12;
+       d.setHours(h,parseInt(m[5]||0),0,0);
+       const friendly=m[1]+'月'+m[2]+'日 '+(m[3]||'')+(m[4]?m[4]+'点':'');
+       return {deadline:d.toISOString(),friendly};
+     }},
+    // 今天
+    {re:/今天[\s,，]*?(上午|下午|晚上)?[\s]*?(\d{1,2})[点:：](\d{0,2})?/,
+     fn:(m)=>{
+       const d=new Date();
+       let h=parseInt(m[2]);
+       if((m[1]==='下午'||m[1]==='晚上')&&h<12)h+=12;
+       d.setHours(h,parseInt(m[3]||0),0,0);
+       return {deadline:d.toISOString(),friendly:'今天 '+(m[1]||'')+m[2]+'点'};
+     }}
+  ];
+
+  const hasTodo=todoKeywords.test(text)||/交|发|完成|提交|汇报|报告/.test(text);
+  if(!hasTodo)return;
+
+  let timeInfo={deadline:null,friendly:'未识别到时间'};
+  for(const p of timePatterns){
+    const m=text.match(p.re);
+    if(m){try{timeInfo=p.fn(m);}catch(e){}break;}
+  }
+
+  // Extract task: remove time expressions, keep the core task
+  let task=text
+    .replace(/周[一二三四五六日天][\s,，]*(上午|下午|晚上)?[\s]*(\d{1,2})[点:：](\d{0,2})?/g,'')
+    .replace(/(今天|明天|后天)[\s,，]*(上午|下午|晚上)?[\s]*(\d{1,2})[点:：](\d{0,2})?/g,'')
+    .replace(/\d{1,2}月\d{1,2}[日号]/g,'')
+    .replace(/[前,，。.\s]+$/,'').trim();
+  if(!task)task=text.trim();
+
+  S.type='todo';S.todoDeadline=timeInfo.deadline;
+  document.getElementById('tpIcon').textContent='✅';
+  document.getElementById('tpText').textContent='待办事项';
+  document.getElementById('typePill').classList.add('show');
+  document.getElementById('todoTask').value=task;
+  document.getElementById('todoTimeText').textContent=timeInfo.friendly;
+  document.getElementById('todoCard').classList.add('show');
+  document.getElementById('depthWrap').classList.remove('show');
+  document.getElementById('analyzeBtn').classList.remove('show');
 }
 
 function editTodoTime(){
