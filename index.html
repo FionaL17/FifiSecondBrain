@@ -480,10 +480,8 @@ function renderResult(t,raw){
   if(p.title)secs.push({k:'title',lb:'标题',v:p.title,r:1});
   if(p.ocr)secs.push({k:'ocr',lb:'识别文字',v:p.ocr,r:6});
   if(p.summary)secs.push({k:'summary',lb:'核心摘要',v:p.summary,r:3});
-  if(p.points?.length)secs.push({k:'points',lb:'关键要点',v:p.points.join('
-'),r:Math.min(p.points.length+1,6)});
-  if(p.quotes?.length)secs.push({k:'quotes',lb:'金句',v:p.quotes.join('
-'),r:Math.min(p.quotes.length+1,4)});
+  if(p.points?.length)secs.push({k:'points',lb:'关键要点',v:p.points.join('\n'),r:Math.min(p.points.length+1,6)});
+  if(p.quotes?.length)secs.push({k:'quotes',lb:'金句',v:p.quotes.join('\n'),r:Math.min(p.quotes.length+1,4)});
   if(p.actions)secs.push({k:'actions',lb:'启发/行动',v:p.actions,r:2});
   const titles={article:'文章解析',tweet:'推文解析',pdf:'PDF提炼',image:'OCR识别',book:'书籍笔记'};
   document.getElementById('rcTitle').textContent=titles[t]||'解析结果';
@@ -530,11 +528,8 @@ async function submitNotion(){
     title=(document.getElementById('rc_title')?.value||'').trim()||mainVal.slice(0,40)||LABELS[t];
     const parts=[];
     [{k:'summary',l:'摘要'},{k:'ocr',l:'识别文字'},{k:'points',l:'要点'},{k:'quotes',l:'金句'},{k:'actions',l:'启发'}]
-      .forEach(({k,l})=>{const el=document.getElementById('rc_'+k);if(el?.value.trim())parts.push('【'+l+'】
-'+el.value.trim());});
-    content=parts.join('
-
-');
+      .forEach(({k,l})=>{const el=document.getElementById('rc_'+k);if(el?.value.trim())parts.push('【'+l+'】\n'+el.value.trim());});
+    content=parts.join('\n\n');
   }else{
     if(!mainVal){showSt('请先输入内容','err');return;}
     const m=mainVal.match(/https?:\/\/[^\s]+/);
