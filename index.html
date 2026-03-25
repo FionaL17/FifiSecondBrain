@@ -216,6 +216,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   <!-- Type pill -->
   <div class="pill hide" id="pill"></div>
 
+  <!-- Manual type switch -->
+  <div id="typeSwitch" style="display:none;margin-bottom:11px;">
+    <span style="font-size:11px;color:var(--text3);">不对？切换为：</span>
+    <button onclick="setManual('article')" style="font-size:11px;padding:3px 10px;border:0.5px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text2);cursor:pointer;margin-left:4px;">🔗 文章</button>
+    <button onclick="setManual('book')"   style="font-size:11px;padding:3px 10px;border:0.5px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text2);cursor:pointer;margin-left:4px;">📚 读书笔记</button>
+    <button onclick="setManual('tweet')"  style="font-size:11px;padding:3px 10px;border:0.5px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text2);cursor:pointer;margin-left:4px;">🐦 推文</button>
+  </div>
+
   <!-- Depth selector -->
   <div class="depth-wrap" id="depthWrap">
     <div class="depth-lbl">解析深度</div>
@@ -330,6 +338,9 @@ function setType(t){
   document.getElementById('depthWrap').style.display=NEEDS_DEPTH.has(t)?'block':'none';
   document.getElementById('mediaSec').classList.toggle('show',t==='media');
   document.getElementById('analyzeBtn').style.display=NEEDS_AI.has(t)?'block':'none';
+  // show switch hint only when auto-detected as note (user typed text, not URL)
+  const showSwitch = t==='note' && document.getElementById('mainInp').value.trim().length > 0;
+  document.getElementById('typeSwitch').style.display = showSwitch ? 'block' : 'none';
 }
 function setDepth(d){
   S.depth=d;[1,2,3].forEach(i=>document.getElementById('d'+i).classList.toggle('on',i===d));
@@ -399,9 +410,25 @@ async function runAnalysis(){
       const val=document.getElementById('mainInp').value.trim();
       if(!val){showSt('请先输入内容','err');return;}
       const names={article:'网页文章',tweet:'推文',book:'书籍/读书笔记'};
+      let articleContent=val;
+      if(t==='article'||t==='tweet'){
+        const urlMatch=val.match(/https?:\/\/[^\s]+/);
+        if(urlMatch){
+          showSt('正在抓取文章内容…','ld');
+          try{
+            const mlRes=await fetch('https://api.microlink.io?url='+encodeURIComponent(urlMatch[0])+'&meta=false&text=true');
+            const mlData=await mlRes.json();
+            if(mlData.status==='success'){
+              const t2=mlData.data.title||'';
+              const tx=mlData.data.text||mlData.data.description||'';
+              if(tx) articleContent='标题：'+t2+'\n\n正文：'+tx.slice(0,3000);
+            }
+          }catch(e){}
+          showSt('AI 解析中，请稍候…','ld');
+        }
+      }
       body={model:'claude-sonnet-4-20250514',max_tokens:1000,
-        messages:[{role:'user',content:`分析以下${names[t]}：\n${val}\n\n${DEPTH_INSTR[S.depth]}。${JSON_FORMAT}`}]};
-      if(t==='article'||t==='tweet') body.tools=[{type:'web_search_20250305',name:'web_search'}];
+        messages:[{role:'user',content:'分析以下'+names[t]+'内容：\n'+articleContent+'\n\n'+DEPTH_INSTR[S.depth]+'。'+JSON_FORMAT}]};
     }
 
     const res=await fetch('/api/anthropic',{
