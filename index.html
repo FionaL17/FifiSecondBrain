@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Spark 🌟">
 <meta name="theme-color" content="#faf7f2">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAEP0lEQVR4nO3Xy40cSRBEwZaDIlCE1V+vXfBAgJ8dsid/HhllDti1OivrXfr1Krov/3z9l7rSfZRb+oMg+KmlLxiBL1n6Iqkl3ePw0hdHbek+3176orhLutcPl74Y7pbu96elL4Me0h0LmS3ETDtiph0x046YaUfMtCNm2hEz7QiaVsRMO2KmHUHTiphpR9C0ImbaETStiDng+9Ln6ErQhwl6LzEfJuj9BH2QoPcT9CG/Ln2ergR9iKDPEPMhgj5H0AcI+hxBb/bR0ufqStCbCfosQW8m6LMEvdHflj5fR4LeSNDnCXojQZ8n5k3eXfqcHQl6A0HnCHoDQecIerHPLn3ebgS9mKCzBL3Q6NLn7kTQCwk6T9ALCTpP0IvMLn3+LgS9iKBrEPQigq5B0AusWvo9OhD0AoKuQ9ALCLoOQS8g6DoEPWn10u9zO0FPEnQtgp4k6FoEPUnQtQh6wq6l3+tmgp4g6HoEPUHQ9Qh6gqDrEfQEQdcj6EG7l36/Wwl6kKBrEvQgQdck6EGCrknQgwRdk6AHCbomQQ8SdE2CHiTomgQ9SNA1CXqQoGsS9AQx1yPoCYKuR9ATBF2PoCcIuh5BTxB0PYKeJOZaHhv0qsBOB73qOV09Iuid0d367K5aBn1yK38vcfZuWgRta5b+jo8O2vYu/X0fEbRllv7u7YK2Gkt3cHXQVnvpPq4I2u5cuptSQVuvpXs6HrQ9a+2CNvtxgrZWuz5ogT97p/vyp9CWLt1TPGhx3790N2WDFvc9S/dxXdDirrd0B22CFnZ26e/eNmhxn1v6+z4uaHGvX/o7CrpA4Ct/L3H2bloGvTvwDs/u6hFBz0S+6jmnfy99vymPDXqV00HzZ4KesGvp97qZoCcIuh5BTxB0PYKeIOh6BD1B0PUIetDupd/vVoIeJOiaBD1I0DUJepCgaxL0IEHXJOhBgq5J0IMEXZOgBwm6JkEPEnRNgh4k6JoEPUHM9Qh6gqDrEfQEQdcj6AmCrkfQEwRdj6AnibkWQU8SdC2CniToWgQ9SdC1CHoBMdch6AUEXYegFxB0HYJeQNB1CHoRMdcg6EUEXYOgFxF0DYJeSMx5gl5I0HmCXkjQeYJeTMxZgl5M0FmC3kDMOYLeQNA5gt5A0Dmvb0sfoiMxn/f6vvRBOhL0eYLeSNDnCXozMZ8l6M0EfZagNxP0WYI+QMznCPoAQZ/z+nHpw3Ql6DNevy59oK4EfYagDxLzfoI+SND7/Ra0qPcR9F7/G7Og9xH0Xh8GLWpu88eYBc1t/hq0qLnFWzELmlu8HbSoqe5TMQua6j4dtKipaihmUVPRVMyCpprpoEVNFUtiFjUVLI1Z1CRtiVnUJGyNWdScdCRmUXPC0ZhFzU6RmIXNaumOf1r6Mrhbut8Pl74Y7pLu9e2lL4ra0n0OL31x1JLucdnSF4mQty59wQj46NIfhDuD/Q9tdnBbe/P9qgAAAABJRU5ErkJggg==">
 <title>Spark</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjE4MCIgaGVpZ2h0PSIxODAiIHJ4PSI0MCIgZmlsbD0iIzFhM2EyYSIvPjxwYXRoIGQ9Ik05MCAzNiBMOTcgNzkgTDE0MCA5MCBMOTcgMTAxIEw5MCAxNDQgTDgzIDEwMSBMNDAgOTAgTDgzIDc5IFoiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjk1Ii8+PHBhdGggZD0iTTEzMCA0MyBMMTMzIDU0IEwxNDQgNTYgTDEzMyA1OCBMMTMwIDY5IEwxMjcgNTggTDExNiA1NiBMMTI3IDU0IFoiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjUiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjEyNiIgcj0iNSIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuMyIvPjwvc3ZnPg==">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -440,16 +440,26 @@ function editTodoTime(){
 function addToReminders(){
   const task=document.getElementById('todoTask').value.trim();
   if(!task){showSt('请填写任务描述','err');return;}
-  let url='x-apple-reminderkit://remindersapp/new-reminder?title='+encodeURIComponent(task);
+  const timeText=document.getElementById('todoTimeText').textContent;
+  // Build reminder text with time info
+  const fullText=timeText&&timeText!=='未识别到时间'?task+' (截止：'+timeText+')':task;
+  // Copy to clipboard first
+  navigator.clipboard.writeText(fullText).catch(()=>{});
+  // Try multiple URL schemes for iOS Reminders
+  let url;
   if(S.todoDeadline){
     try{
       const d=new Date(S.todoDeadline);
-      url+=`&dueDate=${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      url+=`&dueTime=${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const due=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      // Use shortcuts URL scheme to create reminder with date
+      const shortcutInput=encodeURIComponent(JSON.stringify({task:task,deadline:S.todoDeadline,friendly:timeText}));
+      url='shortcuts://run-shortcut?name='+encodeURIComponent('Spark待办')+'&input=text&text='+encodeURIComponent(fullText);
     }catch(e){}
   }
+  if(!url) url='x-apple-reminderkit://remindersapp/new-reminder?title='+encodeURIComponent(task);
+  // Try opening, fallback gracefully
   window.location.href=url;
-  showSt('正在跳转到提醒事项…','ok');
+  showSt('任务已复制到剪贴板，正在跳转提醒事项…','ok');
 }
 
 function toggleVoice(){
